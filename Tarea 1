@@ -1,0 +1,141 @@
+#José Alejandro Paniagua Padilla
+#Alberto Martinez Vega
+class BalanceError(Exception):
+    """El saldo es inválido"""
+
+    def __init__(self, cuenta, advertencia):
+        self.cuenta = cuenta
+        self.advertencia = advertencia
+    
+    def __str__(self):
+        return 'BalanceError('+ self.advertencia +') en' + str(self.cuenta)
+
+class AmountError(Exception):
+    
+    def __init__(self, cuenta, advertencia):
+        self.cuenta = cuenta
+        self.advertencia = advertencia
+    
+    def __str__(self):
+        return 'AmountError('+ self.advertencia +') en' + str(self.cuenta)
+
+###################################################################################
+class Cuenta:
+    """" Clase utilizada para representar un tipo de cuenta """
+    #Variable compartida entre los objetos de la misma clase (Variable de clase)
+    contador_instancias = 0
+
+    #Método de clase. Se necesita para el acceso a variable de clase.
+    @classmethod
+    def incrementa_contador_instancias(cls):
+        print('Creando cuenta')
+        cls.contador_instancias += 1
+
+    def __init__(self, numero_cuenta, titular_cuenta, saldo_apertura, tipo_cuenta):
+        Cuenta.incrementa_contador_instancias()
+        self.numero_cuenta = numero_cuenta
+        self.titular_cuenta = titular_cuenta
+        self.saldo = saldo_apertura
+        self.tipo = tipo_cuenta
+
+    def deposito(self, monto):
+        if monto < 0:
+            #print('No es posible depositar cantidades negativas.')
+            raise AmountError(cuenta = self, advertencia = 'No pueden depositarse montos negativos')
+        else:
+            self.saldo += monto
+
+    def retiro(self, monto):
+        if monto < 0:
+            #print('No pueden retirar montos negativos')
+            raise AmountError(self, 'No pueden retirar montos negativos')
+        else:
+            self.saldo -= monto
+
+    def get_saldo(self):
+        """ Obtiene el saldo de la cuenta """
+        return self.saldo
+
+    def __str__(self):
+        return ' Cuenta[' + self.numero_cuenta +'] - ' + \
+               self.titular_cuenta + ', ' + self.tipo + ' Saldo = ' + str(self.get_saldo())
+
+##########################################################################################
+class Cuenta_Corriente(Cuenta):
+
+    def __init__(self, numero_cuenta, titular_cuenta, saldo_apertura, limite_sobregiro):
+        super().__init__(numero_cuenta, titular_cuenta, saldo_apertura, 'Cuenta Corriente')
+        self.limite_sobregiro =- limite_sobregiro
+
+    def retiro(self, monto):
+        if monto < 0:
+            #print('No puede retirar montos negativos.')
+            raise AmountError(self, 'No pueden retirara montos negarivos')
+        elif self.get_saldo() - monto < self.limite_sobregiro:
+            #print('El retiro exedería su límite de sobregiro')
+            raise BalanceError(self, 'El retiro exede su límite.')
+        else:
+            self.saldo -= monto
+
+    def __str__(self):
+        return super().__str__() + ' Límite de sobregiro: ' + str(self.limite_sobregiro)
+
+###################################################################################################
+class Cuenta_Deposito(Cuenta):
+
+    def __init__(self, numero_cuenta, titular_cuenta, saldo_apertura, tasa_interes):
+        super().__init__(numero_cuenta, titular_cuenta, saldo_apertura, 'Cuenta de Depósito')
+        self.tasa_interes = tasa_interes
+
+    def __str__(self):
+        return super().__str__() + ' Tasa de interés: ' + str(self.tasa_interes)
+
+
+class Cuenta_Inversion(Cuenta):
+    def __init__(self, numero_cuenta, titular_cuenta, saldo_apertura, tipo_inversion):
+        super().__init__(numero_cuenta, titular_cuenta, saldo_apertura, 'Cuenta de Inversión')
+        self.tipo_inversion = tipo_inversion
+
+    def __str__(self):
+        return super().__str__() + ', Tipo de cuenta: ' + self.tipo
+
+###########################################################################
+# Programa principal
+###########################################################################
+#Crea un objeto de cada clase. Todas heredan de la clase base "Cuenta"
+acc1 = Cuenta_Corriente('123', 'Juan', 10.05, 100.0)
+acc2 = Cuenta_Deposito('345', 'Pedro', 23.55, 0.5)
+acc3 = Cuenta_Inversion('567', 'Rosa', 12.45, 'Alto Riesgo')
+
+#Invocamos el método __str__() para imprimir el contenido de cada objeto
+print(acc1)
+print(acc2)
+print(acc3)
+
+#Modificamos  el saldo de la cuenta acc1.
+#acc1.deposito(23.45)
+#acc1.retiro(12.33)
+
+###### Quitar comentarios para probar validaciones.
+#acc1.deposito(-1)
+#acc1.retiro(300.0)
+
+#Se imprime el nuevo saldo de la cuenta acc1.
+#print('Saldo acc1: ', acc1.get_saldo())
+
+#print('Número de cuentas creadas:', Cuenta.contador_instancias)
+
+# A partir de aquí debe poner los bloques try y except.
+try:
+    print('saldo acc1: ', acc1.get_saldo())
+    acc1.retiro(300.00)
+    print('saldo acc1: ', acc1.get_saldo())
+except BalanceError as e:
+    print('Manejando excepción')
+    print(e)
+
+try:
+    acc1.deposito(-1)
+except AmountError as e:
+    print(e)
+###### esta incompleto
